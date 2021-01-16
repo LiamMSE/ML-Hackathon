@@ -128,78 +128,62 @@ X_train, X_test, y_train, y_test = train_test_split(X, y,test_size=0.02,shuffle=
 scores = []
 params = []
 
-param_grid_choices = {'num_leaves': [128, 255, 512, 1024],
-              'min_child_samples': [5, 10, 15, 30],
-              'colsample_bytree': [0.2, 0.3, 0.4, 0,5, 0.6, 0.7]}
+param_grid_choices = {'num_leaves': [64, 125, 256, 512, 1024],
+              'min_child_samples': [5, 15, 30, 45, 60],
+              'colsample_bytree': [0.3, 0.4, 0.5, 0.6, 0.7]}
 
-estimator = LGBMRegressor(learning_rate=0.003, n_estimators=1000, silent=True, **param_grid_choices)
-
-gs = GridSearchCV(estimator,param_grid=param_grid_choices, n_jobs=-1)
+# Tried to use GridSearchCV from line 136 to line 148, but the time it took is too long
+# That is, run line 136~ 148 instead of the following for-loop section
+# estimator = LGBMRegressor(learning_rate=0.003, n_estimators=1000, silent=True, **param_grid_choices)
+#
+# gs = GridSearchCV(estimator,param_grid=param_grid_choices, n_jobs=-1)
+#
+# fit_params = {'early_stopping_rounds': 1000,'feature_name': categorical_columns + numerical_columns,
+#               'categorical_feature': categorical_columns,
+#               'eval_set': [(X_test, y_test)]}
+#
+# fitted_model = gs.fit(X_train, y_train, **fit_params)
+# g = fitted_model.best_params_
+# print("Best score = {}".format(fitted_model.best_score_))
+# print("Best params = {}".format(fitted_model.best_params_))
 
 fit_params = {'early_stopping_rounds': 1000, 'feature_name': categorical_columns + numerical_columns,
               'categorical_feature': categorical_columns,
-              'eval_set': [(X_test, y_test)]}
-#estimator.fit(X_train, y_train, **fit_params)
-fitted_model = gs.fit(X_train, y_train, **fit_params)
-print("Best score = {}".format(fitted_model.best_score_))
-print("Best params = {}".format(fitted_model.best_params_))
+              'eval_set': [(X_train, y_train), (X_test, y_test)]}
 
-# for i, g in enumerate(ParameterGrid(param_grid_choices)):
-#     print("param grid: {}/{}".format(i, len(ParameterGrid(param_grid_choices)) - 1))
-#     estimator = LGBMRegressor(learning_rate=0.003, n_estimators=1000, silent=True, **g)
-#     fit_params = {'early_stopping_rounds': 1000, 'feature_name': categorical_columns + numerical_columns,
-#                   'categorical_feature': categorical_columns,
-#                   'eval_set': [(X_test, y_test)]}
-#     estimator.fit(X_train, y_train, **fit_params)
-#
-#     print("estimator.best_score = {} with this param {}".format(estimator.best_score_, g))
-#     scores.append(estimator.best_score_['l2'])
-#     #scores.append(estimator.best_score_['l2'])
-#     params.append(g)
-#
-# scores_arry = np.array(scores)
-# print(scores_arry[0])
-# print(scores_arry[1])
-# type(scores_arry)
-# print("Best score = {}".format(np.min(scores)))
-#
-# print("Best params = {}".format(params[np.argmin(scores_arry)]))
-# #print(params[np.argmin(scores['l2]'])])
+for i, g in enumerate(ParameterGrid(param_grid_choices)):
+    estimator = LGBMRegressor(learning_rate=0.003, n_estimators=1000, silent=True, **g)
+    estimator.fit(X_train, y_train, **fit_params)
+    print("param grid: {}/{}".format(i, len(ParameterGrid(param_grid_choices)) - 1))
+    print("estimator.best_score = {} with this param {}".format(estimator.best_score_, g))
+    scores.append(estimator.best_score_)
+    params.append(g)
 
-# Train the LightGBM model on the best parameters obtained by grid search.
-# g = {'colsample_bytree': 0.4,
-#      'min_child_samples': 5,
-#      'num_leaves': 255,
-#      'max_depth': 8,
-#      'feature_fraction': 0.6}
-#
-# estimator = LGBMRegressor(learning_rate=0.003,
-#                           n_estimators=5000,
-#                           silent=True,
-#                           **g)
-#
-# fit_params = {'early_stopping_rounds': 1000,
-#               'feature_name': categorical_columns + numerical_columns,
-#               'categorical_feature': categorical_columns,
-#               'eval_set': [(X_train, y_train), (X_test, y_test)]}
-#
-# estimator.fit(X_train, y_train, **fit_params)
-#
-# scores.append(estimator.best_score_['valid_1']['l2'])
-# params.append(g)
-#
-# # print("Best score = {}".format(np.min(scores)))
-# # print("Best params =")
-# # print(params[np.argmin(scores)])
+scores_arry = []
+for k in range(len(scores)):
+    scores_arry.append(scores[k]['valid_1']['l2'])
+    print("k = ", k, "scores_arry[k] = ", scores_arry[k])
 
-#
-# # Get predictions on the test set and prepare submission file.
-# X = df_test[categorical_columns + numerical_columns]
-#
-# pred = estimator.predict(X)
-# pred = np.expm1(pred)
-#
-# submission_df = df_test.copy()
-# submission_df['num_orders'] = pred
-# submission_df = submission_df[['id', 'num_orders']]
-# submission_df.to_csv('submission.csv', index=False)
+print("Minimum l2 (best score) = {}".format(np.min(scores_arry)))
+
+best_para = params[np.argmin(scores_arry)]
+print("Best params = {}".format(best_para))
+
+# Train the LightGBM model on the best parameters obtained by grid search
+estimator = LGBMRegressor(learning_rate=0.003,
+                          n_estimators=5000,
+                          silent=True,
+                          **best_para)
+
+estimator.fit(X_train, y_train, **fit_params)
+
+# Get predictions on the test set and prepare submission file.
+X = df_test[categorical_columns + numerical_columns]
+
+pred = estimator.predict(X)
+pred = np.expm1(pred)
+
+submission_df = df_test.copy()
+submission_df['num_orders'] = pred
+submission_df = submission_df[['id', 'num_orders']]
+submission_df.to_csv('submission.csv', index=False)
