@@ -1,5 +1,5 @@
 # ML-Hackathon
-This is the first big data I learnt from https://datahack.analyticsvidhya.com/contest/genpact-machine-learning-hackathon-1/#LeaderBoard,
+This is the first big data project I learnt from https://datahack.analyticsvidhya.com/contest/genpact-machine-learning-hackathon-1/#LeaderBoard,
 wth the help and reference of (https://varunbpatil.github.io/2018/12/25/genpact-ml-hackathon.html). This is a self learning personal project,
 given the credit to https://varunbpatil.github.io/2018/12/25/genpact-ml-hackathon.html. My solution is ranking 12th in Jan26,2021. 
 
