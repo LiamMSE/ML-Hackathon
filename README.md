@@ -5,8 +5,8 @@ given the credit to https://varunbpatil.github.io/2018/12/25/genpact-ml-hackatho
 
 
 Below is his readme section.
-My solutions to various Machine Learning Hackathons
 
+My solutions to various Machine Learning Hackathons
 
 
 | Contest | Description | Rank | Language | Algorithm | Blog  |
